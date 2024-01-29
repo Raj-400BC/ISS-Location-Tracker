@@ -1,58 +1,48 @@
-// console.log('fetching the current location of ISS');
-// async function issLocater(){
-//     const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-//     console.log(response);
-//     const dataiss = await response.json();
-//     const {name , latitude , longitude} = dataiss;
-//     console.log(dataiss)
-//     document.getElementById('name').textContent = name;
-//      document.getElementById('lon').textContent = latitude;
-//      document.getElementById('lat').textContent = longitude;
-//      var map = L.map('map').setView([latitude, longitude], 13);
-//      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//          maxZoom: 19,
-//          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-//      }).addTo(map);
-//      var marker = L.marker([latitude, longitude]).addTo(map);
-//      var circle = L.circle([latitude, longitude], {
-//         color: 'red',
-//         fillColor: '#f03',
-//         fillOpacity: 0.5,
-//         radius: 500
-//     }).addTo(map);
-     
+const API = "https://api.wheretheiss.at/v1/satellites/25544";
+// Making map and tiles
+const map = L.map("map").setView([0, 0],2);
 
-//      // Here I am using '.textContent' instead of '.innerHTML' because textContent has better performance because its value is not parsed as HTML and using textContent can prevent XSS attacks.  -- via google
+const attribution =
+  '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const tileURL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const tiles = L.tileLayer(tileURL, { attribution });
+tiles.addTo(map);
 
+// Making marker and custom icon
+var myIcon = L.icon({
+  iconUrl: "/images/marker.png",
+  iconSize: [50, 32],
+  iconAnchor: [25, 16],
+});
+const marker = L.marker([0, 0], { icon: myIcon }).addTo(map);
 
-// }
+let firstTime = true; // to stop the zooming on each lat and lon update
+async function issLocater() {
+  try {
+    const response = await fetch(API);
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
 
-// issLocater().catch(error =>{
-//     console.log(error)
-// });
-
-var map;
-
-setInterval(async function issLocater(){
-    const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-    console.log(response);
     const dataiss = await response.json();
-    const {name , latitude , longitude} = dataiss;
-    console.log(dataiss)
-    document.getElementById('name').textContent = name;
-     document.getElementById('lon').textContent = latitude;
-     document.getElementById('lat').textContent = longitude;
-     map = L.map('map').setView([latitude, longitude], 13);
-     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-         maxZoom: 19,
-         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-     }).addTo(map);
-     var marker = L.marker([latitude, longitude]).addTo(map);
-     var circle = L.circle([latitude, longitude], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.5,
-        radius: 500
-    }).addTo(map);
-}, 1000);
+    const { latitude, longitude } = dataiss;
+
+    // map.setView([latitude, longitude], map.getZoom()); // Moving the map with the position of the marker(satellite)
+    marker.setLatLng([latitude, longitude]);
+
+    if (firstTime) {
+      map.setView([latitude, longitude], 3);
+      firstTime = false;
+    }
+
+    document.getElementById("lat").textContent = latitude.toFixed(2);
+    document.getElementById("lon").textContent = longitude.toFixed(2);
+  } catch (error) {
+    console.error("Error fetching ISS location:", error);
+  }
+}
+
+issLocater();
+
+setInterval(issLocater, 1000);
