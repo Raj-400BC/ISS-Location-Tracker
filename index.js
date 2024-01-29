@@ -20,14 +20,14 @@ let firstTime = true; // to stop the zooming on each lat and lon update
 async function issLocater() {
   try {
     const response = await fetch(API);
-
+    
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
     const dataiss = await response.json();
     const { latitude, longitude } = dataiss;
-
+console.log(dataiss)
     // map.setView([latitude, longitude], map.getZoom()); // Moving the map with the position of the marker(satellite)
     marker.setLatLng([latitude, longitude]);
 
